@@ -123,8 +123,10 @@ Lemma game_last_swapped :
   forall (g: Game) (b1 b2 b3: bool),
     game_last g = (b1, (b2, b3)) <-> game_last (swap_game g) = (b1, (b3, b2)).
 Proof.
-Admitted.
-
+  split; intro H;
+  destruct g as [| p]; simpl in *; try destruct p; simpl in *;
+  inversion H; subst; reflexivity.
+Qed. 
 
 (* Always true strategy can yield only true *)
 Theorem always_true_yields_only_true :
@@ -249,7 +251,34 @@ Theorem tit_for_tat_head_true :
   g = [] \/ game_last g = (true, (true, true)) \/ game_last g = (true, (false, true)) ->
   st_tit_for_tat g = true.
 Proof.
-Admitted.
+  intros.
+  * destruct H.
+    + rewrite H. auto.
+    + unfold st_tit_for_tat.
+       destruct g. reflexivity.
+      destruct p.
+      rewrite game_last_head in H.
+      destruct H.
+      inversion H. reflexivity.
+      inversion H. reflexivity.
+Qed.
+
+Lemma tit_for_tat_gives_true_true_if_last_true_true :
+  forall (g: Game),
+  game_last g = (true, (true, true)) ->
+  play g st_tit_for_tat st_tit_for_tat = (true, true) :: g.
+Proof.
+  intros.
+  unfold play.
+  replace (st_tit_for_tat g) with (true).
+  * replace (st_tit_for_tat (swap_game g)) with (true).
+    + reflexivity.
+    + symmetry. apply tit_for_tat_head_true.
+      rewrite game_last_swapped in H.
+      right. left. apply H.
+  * symmetry. apply tit_for_tat_head_true.
+    right. left. apply H.
+Qed.
 
 (* Tit for tat against itself always yiels (true, true) *)
 Theorem tit_for_tat_against_itself_always_true :
@@ -257,7 +286,18 @@ Theorem tit_for_tat_against_itself_always_true :
   game_last (play_many [] st_tit_for_tat st_tit_for_tat n) = (true, (true, true)) \/
   n = 0 (* n=0 *).
 Proof.
-Admitted.
+  intros.
+  induction n.
+  * right. reflexivity.
+  * left.
+    destruct IHn.
+    + rewrite play_many_N_plus_1.
+      apply tit_for_tat_gives_true_true_if_last_true_true in H.
+      rewrite H.
+      simpl.
+      reflexivity. 
+    + rewrite H. simpl. reflexivity.
+Qed.
 
 (* Tit for tat againt tit for tat gives 3*n *)
 
@@ -285,6 +325,3 @@ Proof.
       +++ rewrite H. auto.
       +++ rewrite H. auto.
 Qed.
-
-
-
