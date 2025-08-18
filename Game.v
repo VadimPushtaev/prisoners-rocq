@@ -128,17 +128,6 @@ Proof.
   inversion H; subst; reflexivity.
 Qed. 
 
-(* Always true strategy can yield only true *)
-Theorem always_true_yields_only_true :
-  forall g : Game,
-  game_last (play g st_always_true st_always_true) = (true, (true, true)).
-Proof.
-  intros.
-  unfold play.
-  unfold st_always_true.
-  apply game_last_head.
-Qed.
-
 (* Play N+1 times is plaing N times and then 1 more *)
 Lemma play_many_N_plus_1 :
   forall (g : Game) (s1 s2 : Strategy) (n : nat),
@@ -263,6 +252,23 @@ Proof.
       inversion H. reflexivity.
 Qed.
 
+Lemma tit_for_tat_gives_true_if_given_true :
+  forall (g: Game) (b: bool) (s: Strategy),
+  game_last g = (true, (b, true)) ->
+  play g st_tit_for_tat s = (true, true) :: g \/ play g st_tit_for_tat s = (true, false) :: g.
+Proof.
+  intros.
+  unfold play.
+  destruct g.
+  + discriminate H.
+  + destruct p. rewrite game_last_head in H.
+    inversion H.
+    simpl.
+    destruct (s ((true, b) :: swap_game g)).
+    * left. reflexivity.
+    * right. reflexivity.
+Qed.
+
 Lemma tit_for_tat_gives_true_true_if_last_true_true :
   forall (g: Game),
   game_last g = (true, (true, true)) ->
@@ -299,11 +305,38 @@ Proof.
     + rewrite H. simpl. reflexivity.
 Qed.
 
-(* Tit for tat againt tit for tat gives 3*n *)
+(* Tit for tat against always true always yields (true, true) *)
+Theorem tit_for_tat_against_always_true_always_true :
+  forall n : nat,
+  game_last (play_many [] st_tit_for_tat st_always_true n) = (true, (true, true)) \/
+  n = 0 (* n=0 *).
+Proof.
+  intros.
+  induction n.
+  * right. reflexivity.
+  * left.
+    destruct IHn.
+    + rewrite play_many_N_plus_1.
+      apply (tit_for_tat_gives_true_if_given_true _ _ st_always_true) in H.
+      destruct H.
+      +++ rewrite H. auto.
+      +++ apply (f_equal game_last) in H.
+          simpl in H.
+          destruct (st_tit_for_tat (play_many [] st_tit_for_tat st_always_true n)).
+          *** replace (st_always_true (swap_game (play_many [] st_tit_for_tat st_always_true n))) with true in H.
+              discriminate H.
+              unfold st_always_true. reflexivity.
+          *** replace (st_always_true (swap_game (play_many [] st_tit_for_tat st_always_true n))) with true in H.
+              discriminate H.
+              unfold st_always_true. reflexivity.
+    + rewrite H. simpl. unfold st_always_true. reflexivity.
+Qed.
+
+(* Tit for tat against tit for tat gives 3*n *)
 
 Theorem tit_for_tat_against_tit_for_tat_gives_3_n :
   forall n : nat,
-    game_result (play_many [] st_tit_for_tat st_tit_for_tat n) = (3 * n, 3 * n).
+    game_result (play_many [] st_tit_for_tat st_tit_for_tat n) = (3 * n, 3 * n). 
 Proof.
   induction n.
   * simpl. reflexivity.
@@ -322,6 +355,29 @@ Proof.
       +++ rewrite H. auto.
     + symmetry. apply tit_for_tat_head_true.
       destruct (tit_for_tat_against_itself_always_true n).
+      +++ rewrite H. auto.
+      +++ rewrite H. auto.
+Qed.
+
+(* Tit for tat against always true gives 3*n *)
+Theorem tit_for_tat_against_always_true_gives_3_n :
+  forall n : nat,
+    game_result (play_many [] st_tit_for_tat st_always_true n) = (3 * n, 3 * n).
+Proof.
+  induction n.
+  * simpl. reflexivity.
+  * simpl.
+    rewrite IHn.
+    replace (st_tit_for_tat (play_many [] st_tit_for_tat st_always_true  n)) with (true).
+    replace (st_always_true (swap_game (play_many [] st_tit_for_tat st_always_true  n))) with (true).
+    simpl.
+    repeat rewrite Nat.add_succ_r.
+    repeat rewrite Nat.add_0_r.
+    reflexivity.
+    + unfold st_always_true.
+      reflexivity.
+    + symmetry. apply tit_for_tat_head_true.
+      destruct (tit_for_tat_against_always_true_always_true n).
       +++ rewrite H. auto.
       +++ rewrite H. auto.
 Qed.
