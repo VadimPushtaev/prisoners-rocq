@@ -377,7 +377,5 @@ Proof.
     + unfold st_always_true.
       reflexivity.
     + symmetry. apply tit_for_tat_head_true.
-      destruct (tit_for_tat_against_always_true_always_true n).
-      +++ rewrite H. auto.
-      +++ rewrite H. auto.
+      destruct (tit_for_tat_against_always_true_always_true n); rewrite H; auto.
 Qed.
