@@ -333,7 +333,6 @@ Proof.
 Qed.
 
 (* Tit for tat against tit for tat gives 3*n *)
-
 Theorem tit_for_tat_against_tit_for_tat_gives_3_n :
   forall n : nat,
     game_result (play_many [] st_tit_for_tat st_tit_for_tat n) = (3 * n, 3 * n). 
@@ -378,4 +377,20 @@ Proof.
       reflexivity.
     + symmetry. apply tit_for_tat_head_true.
       destruct (tit_for_tat_against_always_true_always_true n); rewrite H; auto.
+Qed.
+
+(* Tit for tat against always false gives (n-1, 5 + n-1) *)
+Theorem tit_for_tat_against_always_false_gives :
+  forall n : nat,
+    game_result (play_many [] st_tit_for_tat st_always_false (S n)) = (n, n + 5).
+Proof.
+  induction n.
+  * simpl. reflexivity.
+  * remember (S n) as k eqn:Heqk.  (* make opaque for simpl *)
+    simpl.
+    rewrite Heqk in *.
+    rewrite IHn.
+    simpl.
+    repeat rewrite Nat.add_1_r.
+    reflexivity.
 Qed.
