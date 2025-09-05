@@ -5,10 +5,10 @@ From Coq Require Import List.
 Import ListNotations.
 Import VectorNotations.
 
-Definition symmetric {A k} (M : t (t A k) k) : Prop :=
+Definition symmetric_games {k} (M : t (t Game k) k) : Prop :=
   forall (i j : Fin.t k),
-    @Vector.nth A k (@Vector.nth (t A k) k M i) j
-  = @Vector.nth A k (@Vector.nth (t A k) k M j) i.
+    Vector.nth (Vector.nth M i) j
+  = swap_game (Vector.nth (Vector.nth M j) i).
 
 Record Tournament (k : nat) := { 
   strategies : t Strategy k;   
@@ -74,12 +74,59 @@ Proof.
   reflexivity.
 Qed.
 
-(* Playing tourname once gives symmteric matrix *)
-Theorem play_tournament_once_gives_symmetric_matrix :
-  forall (k : nat) (tour : Tournament k),
-  symmetric (games k (play_tournament tour)).
+Definition get_ij_game {k : nat} (tour : Tournament k) (i j : Fin.t k) : Game :=
+  Vector.nth (Vector.nth (games k tour) i) j.
+
+Lemma get_ij_game_fold :
+  forall (k : nat) (tour : Tournament k) (i j : Fin.t k),
+  (((games k (tour))[@i])[@j]) = (get_ij_game (tour) i j).
 Proof.
   intros.
-  simpl.
+  unfold get_ij_game.
   reflexivity.
+Qed.
+
+Definition get_idx_strategy {k : nat} (tour : Tournament k) (i : Fin.t k) : Strategy :=
+  Vector.nth (strategies k tour) i.
+
+(* Playing tournament and then getting games for (i, j) is the same as *)
+(* getting games for (i, j) and then playing one more game with (i, j)-strategies *)
+Theorem play_tournament_ij :
+  forall (k : nat) (tour : Tournament k) (i j : Fin.t k),
+  get_ij_game (play_tournament tour) i j
+  = play (get_ij_game tour i j) (get_idx_strategy tour i) (get_idx_strategy tour j).
+Proof.
+  intros.
+  unfold play_tournament.
+  unfold get_ij_game.
+  simpl.
+  rewrite nth_map2 with (p2 := i) (p3 := i).
+  rewrite nth_map2 with (p2 := j) (p3 := j).
+  unfold get_idx_strategy.
+  all: reflexivity.
+Qed.
+
+(* Games matrix is symmetric after start and play *)
+Theorem games_matrix_is_symmetric :
+  forall (k : nat) (strats : t Strategy k),
+  symmetric_games (games k (play_tournament (start_tournament strats))).
+Proof.
+  unfold symmetric_games.
+  intros.
+  repeat rewrite get_ij_game_fold.
+  repeat rewrite play_tournament_ij.
+  rewrite game_swap.
+
+  unfold get_ij_game.
+  unfold start_tournament.
+  simpl.
+  rewrite game_swap_double.
+  
+  unfold swap_game.
+  repeat rewrite game_swap_empty.
+  
+  repeat rewrite const_nth.
+  auto.
+
+  all: repeat rewrite const_nth; auto.
 Qed.

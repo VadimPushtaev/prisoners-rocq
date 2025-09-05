@@ -92,6 +92,26 @@ Proof.
   reflexivity.
 Qed.
 
+(* game_swap: double swap is the same as no swap *)
+Lemma game_swap_double :
+  forall (g : Game),
+  swap_game (swap_game g) = g.
+Proof.
+  intros.
+  induction g.
+  * reflexivity.
+  * destruct a. simpl. rewrite IHg. reflexivity.
+Qed.
+
+(* game_swap: swap empty does nothing *)
+Lemma game_swap_empty :
+  forall (g : Game),
+  g = [] -> swap_game g = [].
+Proof.
+  intros.
+  rewrite H. reflexivity.
+Qed.
+
 (* game_last: first bool is false only for empty game *)
 Theorem game_last_false_first :
   forall (g: Game) (r1 r2: bool),
@@ -169,6 +189,29 @@ Proof.
   * reflexivity.
   * auto.
   * auto.
+Qed.
+
+Lemma game_swap_head :
+  forall (g : Game) (b1 b2 : bool),
+  swap_game ((b1, b2) :: g) = (b2, b1) :: swap_game g.
+Proof.
+  intros.
+  unfold swap_game.
+  simpl.
+  reflexivity.
+Qed.
+
+(* game_swap: playing swapped game is the same as playing the original game with swapped strategies *)
+Lemma game_swap :
+  forall (g : Game) (s1 s2 : Strategy),
+  play g s1 s2 = swap_game (play (swap_game g) s2 s1).
+Proof.
+  intros.
+  repeat rewrite play_adds_head.
+  rewrite game_swap_double.
+  rewrite game_swap_head.
+  rewrite game_swap_double.
+  reflexivity.
 Qed.
 
 (* Always true against always true gives 3*n *)
