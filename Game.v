@@ -74,7 +74,7 @@ Definition st_tit_for_tat : Strategy :=
     | (_, b2) :: _ => b2
     end.
 
-Compute (game_to_string (play (play_many [] st_always_true st_always_true 10) st_always_false st_always_false)).
+Compute (game_to_string (play (play_many [] st_always_true st_always_true 5) st_always_false st_always_false)).
 
 
 
@@ -92,8 +92,8 @@ Proof.
   reflexivity.
 Qed.
 
-(* game_swap: double swap is the same as no swap *)
-Lemma game_swap_double :
+(* swap_game: double swap is the same as no swap *)
+Lemma swap_game_double :
   forall (g : Game),
   swap_game (swap_game g) = g.
 Proof.
@@ -103,8 +103,8 @@ Proof.
   * destruct a. simpl. rewrite IHg. reflexivity.
 Qed.
 
-(* game_swap: swap empty does nothing *)
-Lemma game_swap_empty :
+(* swap_game: swap empty does nothing *)
+Lemma swap_game_empty :
   forall (g : Game),
   g = [] -> swap_game g = [].
 Proof.
@@ -191,7 +191,7 @@ Proof.
   * auto.
 Qed.
 
-Lemma game_swap_head :
+Lemma swap_game_head :
   forall (g : Game) (b1 b2 : bool),
   swap_game ((b1, b2) :: g) = (b2, b1) :: swap_game g.
 Proof.
@@ -201,16 +201,16 @@ Proof.
   reflexivity.
 Qed.
 
-(* game_swap: playing swapped game is the same as playing the original game with swapped strategies *)
-Lemma game_swap :
+(* swap_game: playing swapped game is the same as playing the original game with swapped strategies *)
+Lemma swap_game_again :
   forall (g : Game) (s1 s2 : Strategy),
   play g s1 s2 = swap_game (play (swap_game g) s2 s1).
 Proof.
   intros.
   repeat rewrite play_adds_head.
-  rewrite game_swap_double.
-  rewrite game_swap_head.
-  rewrite game_swap_double.
+  rewrite swap_game_double.
+  rewrite swap_game_head.
+  rewrite swap_game_double.
   reflexivity.
 Qed.
 

@@ -1,4 +1,4 @@
-Load "Game".
+Load "Game.v".
 
 Require Import Coq.Vectors.Vector.
 From Coq Require Import List.
@@ -106,27 +106,37 @@ Proof.
   all: reflexivity.
 Qed.
 
-(* Games matrix is symmetric after start and play *)
-Theorem games_matrix_is_symmetric :
-  forall (k : nat) (strats : t Strategy k),
-  symmetric_games (games k (play_tournament (start_tournament strats))).
+(* Games matrix stays symmetric after one play *)
+Theorem games_matrix_is_symmetric_after_one_play :
+  forall (k : nat) (tour : Tournament k),
+  symmetric_games (games k tour) -> symmetric_games (games k (play_tournament tour)).
 Proof.
   unfold symmetric_games.
   intros.
   repeat rewrite get_ij_game_fold.
   repeat rewrite play_tournament_ij.
-  rewrite game_swap.
+  rewrite swap_game_again.
 
   unfold get_ij_game.
+  rewrite H.
+  simpl.
+  repeat rewrite swap_game_double.
+
+  auto.
+Qed.
+
+(* Games matrix is symmetric after start and play *)
+Theorem games_matrix_is_symmetric :
+  forall (k : nat) (strats : t Strategy k),
+  symmetric_games (games k (play_tournament (start_tournament strats))).
+Proof.
+  intros.
+  apply games_matrix_is_symmetric_after_one_play.
+  unfold symmetric_games.
   unfold start_tournament.
   simpl.
-  rewrite game_swap_double.
-  
-  unfold swap_game.
-  repeat rewrite game_swap_empty.
-  
+  intros.
   repeat rewrite const_nth.
-  auto.
-
-  all: repeat rewrite const_nth; auto.
+  rewrite swap_game_empty.
+  all: reflexivity.
 Qed.
