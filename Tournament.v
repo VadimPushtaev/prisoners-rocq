@@ -106,8 +106,20 @@ Proof.
   all: reflexivity.
 Qed.
 
+(* const+const gives symmetric matrix *)
+Theorem const_const_gives_symmetric_matrix :
+  forall (k : nat) (g : Game),
+  g = swap_game g -> symmetric_games (Vector.const (Vector.const g k) k).
+Proof.
+  intros.
+  unfold symmetric_games.
+  intros.
+  repeat rewrite const_nth.
+  apply H.
+Qed.
+
 (* Games matrix stays symmetric after one play *)
-Theorem games_matrix_is_symmetric_after_one_play :
+Theorem games_matrix_stays_symmetric :
   forall (k : nat) (tour : Tournament k),
   symmetric_games (games k tour) -> symmetric_games (games k (play_tournament tour)).
 Proof.
@@ -126,17 +138,29 @@ Proof.
 Qed.
 
 (* Games matrix is symmetric after start and play *)
-Theorem games_matrix_is_symmetric :
+Theorem games_matrix_is_symmetric_after_start_and_play :
   forall (k : nat) (strats : t Strategy k),
   symmetric_games (games k (play_tournament (start_tournament strats))).
 Proof.
   intros.
-  apply games_matrix_is_symmetric_after_one_play.
-  unfold symmetric_games.
+  apply games_matrix_stays_symmetric.
   unfold start_tournament.
   simpl.
+  apply const_const_gives_symmetric_matrix.
+  reflexivity.
+Qed.
+
+(* Games matrix is symmetric after start and play many times *)
+Theorem games_matrix_is_symmetric_many_times :
+  forall (k : nat) (strats : t Strategy k) (n : nat),
+  symmetric_games (games k (play_tournament_many (start_tournament strats) n)).
+Proof.
   intros.
-  repeat rewrite const_nth.
-  rewrite swap_game_empty.
-  all: reflexivity.
+  induction n.
+  * simpl.
+    apply const_const_gives_symmetric_matrix.
+    reflexivity.
+  * rewrite play_tournament_many_N_plus_1.
+    apply games_matrix_stays_symmetric.
+    apply IHn.
 Qed.

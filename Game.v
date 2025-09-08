@@ -103,15 +103,6 @@ Proof.
   * destruct a. simpl. rewrite IHg. reflexivity.
 Qed.
 
-(* swap_game: swap empty does nothing *)
-Lemma swap_game_empty :
-  forall (g : Game),
-  g = [] -> swap_game g = [].
-Proof.
-  intros.
-  rewrite H. reflexivity.
-Qed.
-
 (* game_last: first bool is false only for empty game *)
 Theorem game_last_false_first :
   forall (g: Game) (r1 r2: bool),
