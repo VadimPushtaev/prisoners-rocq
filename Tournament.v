@@ -15,10 +15,18 @@ Record Tournament (k : nat) := {
   games : t (t Game k) k       
 }.                               
 
+Definition tournament_result {k} (tour : Tournament k)
+  : t (t (nat*nat) k) k :=
+  Vector.map (fun row => Vector.map game_result row) (games k tour).
+
+Definition sum_tournament_result {k} (result : t (t (nat*nat) k) k) : (t nat k) :=
+  Vector.map (fun row => 
+    Vector.fold_left (fun acc game => fst game + acc) 0 row
+  ) result.
+
 Definition start_tournament {k : nat} (strats : t Strategy k) : Tournament k :=
   {| strategies := strats;
      games := Vector.const (Vector.const (nil : Game) k) k |}.
-
 
 Definition play_tournament {k : nat} (tour : Tournament k) : Tournament k :=
   {|
@@ -164,3 +172,16 @@ Proof.
     apply games_matrix_stays_symmetric.
     apply IHn.
 Qed.
+
+(* Equal strategies give equal results *)
+Theorem equal_strategies_give_equal_results :
+  forall (k: nat) (strats : t Strategy k) (i j : Fin.t k),
+  strats[@i] = strats[@j] ->
+  (tournament_result (play_tournament (start_tournament strats)))[@i] =
+  (tournament_result (play_tournament (start_tournament strats)))[@j].
+Proof.
+  intros.
+Admitted.
+    
+Compute  (tournament_result (play_tournament_many (start_tournament [st_always_true; st_always_false; st_tit_for_tat; st_tit_for_tat]) 10)). 
+Compute sum_tournament_result (tournament_result (play_tournament_many (start_tournament [st_always_true; st_always_false; st_tit_for_tat; st_tit_for_tat]) 10)).
