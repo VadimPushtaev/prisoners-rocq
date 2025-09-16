@@ -173,6 +173,18 @@ Proof.
     apply IHn.
 Qed.
 
+Lemma tournament_result_idx :
+(* Vector.map (fun row => Vector.map game_result row) (games k tour) *)
+  forall (k : nat) (tour : Tournament k) (i : Fin.t k),
+  (tournament_result tour)[@i] =
+  Vector.map game_result ((games k tour)[@i]).
+Proof.
+  intros.
+  unfold tournament_result.
+  rewrite nth_map with (p2 := i).
+  all: reflexivity.
+Qed.
+
 (* Equal strategies give equal results *)
 Theorem equal_strategies_give_equal_results :
   forall (k: nat) (strats : t Strategy k) (i j : Fin.t k),
@@ -181,7 +193,17 @@ Theorem equal_strategies_give_equal_results :
   (tournament_result (play_tournament (start_tournament strats)))[@j].
 Proof.
   intros.
-Admitted.
-    
+  repeat rewrite tournament_result_idx.
+  apply f_equal.
+
+  simpl.
+  rewrite nth_map2 with (p2 := i) (p3 := i).
+  rewrite nth_map2 with (p2 := j) (p3 := j).
+
+  rewrite H.
+  repeat rewrite const_nth.
+  all: reflexivity.
+Qed.    
+
 Compute  (tournament_result (play_tournament_many (start_tournament [st_always_true; st_always_false; st_tit_for_tat; st_tit_for_tat]) 10)). 
 Compute sum_tournament_result (tournament_result (play_tournament_many (start_tournament [st_always_true; st_always_false; st_tit_for_tat; st_tit_for_tat]) 10)).
