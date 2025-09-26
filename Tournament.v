@@ -205,5 +205,50 @@ Proof.
   all: reflexivity.
 Qed.    
 
+(* strats of tournament stay the same after playing many times *)
+Theorem strats_stay_the_same_after_playing_many_times :
+  forall (k : nat) (strats : t Strategy k) (n : nat),
+  strategies k (play_tournament_many (start_tournament strats) n) = strats.
+Proof.
+  intros.
+
+  induction n.
+  * simpl.
+    reflexivity.
+  * simpl.
+    rewrite IHn.
+    reflexivity.
+Qed.
+
+Theorem equal_strategies_give_equal_results_many :
+  forall (k : nat) (strats : t Strategy k) (n : nat) (i j : Fin.t k),
+  strats[@i] = strats[@j] ->
+  (tournament_result (play_tournament_many (start_tournament strats) n))[@i] =
+  (tournament_result (play_tournament_many (start_tournament strats) n))[@j].
+Proof.
+  intros.
+  repeat rewrite tournament_result_idx.
+  apply f_equal.
+  
+
+  induction n.
+  * simpl.
+    repeat rewrite const_nth.
+    reflexivity.
+  * simpl.
+    rewrite nth_map2 with (p2 := i) (p3 := i).
+    rewrite nth_map2 with (p2 := j) (p3 := j).
+    rewrite IHn.
+    
+    replace ((strategies k (play_tournament_many (start_tournament strats) n))[@i])
+      with ((strategies k (play_tournament_many (start_tournament strats) n))[@j]).
+    reflexivity.
+
+  rewrite strats_stay_the_same_after_playing_many_times.
+  rewrite H.
+  
+  all: reflexivity.
+Qed.
+
 Compute  (tournament_result (play_tournament_many (start_tournament [st_always_true; st_always_false; st_tit_for_tat; st_tit_for_tat]) 10)). 
 Compute sum_tournament_result (tournament_result (play_tournament_many (start_tournament [st_always_true; st_always_false; st_tit_for_tat; st_tit_for_tat]) 10)).
