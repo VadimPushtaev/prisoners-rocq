@@ -67,12 +67,23 @@ Definition st_always_true : Strategy :=
 Definition st_always_false : Strategy :=
   fun (_ : Game) => false.
 
-Definition st_tit_for_tat : Strategy :=
+  Definition st_tit_for_tat : Strategy :=
   fun (g : Game) =>
     match g with
     | [] => true
     | (_, b2) :: _ => b2
     end.
+
+(* Grim Trigger: cooperate unless opponent has ever defected *)
+Fixpoint opp_ever_defected (g : Game) : bool :=
+  match g with
+  | [] => false
+  | (_, b2) :: t => orb (negb b2) (opp_ever_defected t)
+  end.
+
+Definition st_grim_trigger : Strategy :=
+  fun (g : Game) => negb (opp_ever_defected g).
+
 
 Compute (game_to_string (play (play_many [] st_always_true st_always_true 5) st_always_false st_always_false)).
 
@@ -428,3 +439,22 @@ Proof.
     repeat rewrite Nat.add_1_r.
     reflexivity.
 Qed.
+
+(* Grim Trigger against always true gives 3*n *)
+Theorem grim_trigger_against_always_true_gives_3_n :
+  forall n : nat,
+    game_result (play_many [] st_grim_trigger st_always_true n) = (3 * n, 3 * n).
+Proof.
+  induction n.
+  * simpl. reflexivity.
+  * simpl.
+    rewrite IHn.
+    replace (st_grim_trigger (play_many [] st_grim_trigger st_always_true n)) with (true).
+    replace (st_always_true (swap_game (play_many [] st_grim_trigger st_always_true n))) with (true).
+    simpl.
+    repeat rewrite Nat.add_succ_r.
+    repeat rewrite Nat.add_0_r.
+    reflexivity.
+    + unfold st_always_true. reflexivity.
+    + symmetry. admit. (* implement something like tit_for_tat_head_true *)
+Admitted.
