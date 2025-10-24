@@ -440,6 +440,22 @@ Proof.
     reflexivity.
 Qed.
 
+(* Grim Trigger against always true always yields (true, true) *)
+Theorem grim_trigger_against_always_true_always_true :
+  forall n : nat,
+  game_last (play_many [] st_grim_trigger st_always_true n) = (true, (true, true)) \/
+  n = 0 (* n=0 *).
+Proof.
+Admitted.
+
+(* Grim trigger returns true when head is true or none *)
+Theorem grim_trigger_head_true :
+  forall (g: Game),
+  g = [] \/ game_last g = (true, (true, true)) \/ game_last g = (true, (false, true)) ->
+  st_grim_trigger g = true.
+Proof.
+Admitted.
+
 (* Grim Trigger against always true gives 3*n *)
 Theorem grim_trigger_against_always_true_gives_3_n :
   forall n : nat,
@@ -456,5 +472,7 @@ Proof.
     repeat rewrite Nat.add_0_r.
     reflexivity.
     + unfold st_always_true. reflexivity.
-    + symmetry. admit. (* implement something like tit_for_tat_head_true *)
-Admitted.
+    + symmetry.
+      apply grim_trigger_head_true.
+      destruct (grim_trigger_against_always_true_always_true n); rewrite H; auto.
+Qed.
